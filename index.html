@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shared Agenda</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(135deg, #f5f3ff 0%, #ffffff 50%, #f0f9ff 100%);
+    color: #1e293b; min-height: 100vh;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+  header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .logo { height: 42px; width: 42px; border-radius: 12px; background: #7c3aed; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  h1 { font-size: 20px; margin: 0; }
+  .sub { font-size: 12px; color: #64748b; margin: 0; }
+  .controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  input, button { font-family: inherit; }
+  .name-box { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 8px; }
+  .name-box input { border: none; outline: none; width: 100px; font-size: 14px; background: transparent; }
+  #authBar { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .role { background: #ede9fe; color: #6d28d9; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+  .muted { color: #94a3b8; }
+  .btn-sm { font-size: 13px; padding: 6px 10px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; }
+  .btn-sm:hover { border-color: #c4b5fd; }
+  .datenav { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 22px; }
+  .arrow { height: 40px; width: 40px; border-radius: 999px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; font-size: 18px; }
+  .arrow:hover { border-color: #c4b5fd; }
+  .date-center { text-align: center; min-width: 220px; }
+  #dateLabel { font-size: 18px; font-weight: 600; }
+  #todayBtn { color: #7c3aed; background: none; border: none; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .columns { display: grid; grid-template-columns: 1fr; gap: 18px; }
+  @media (min-width: 720px) { .columns { grid-template-columns: 1fr 1fr; } }
+  .col { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; }
+  .col-head { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; }
+  .dot { height: 10px; width: 10px; border-radius: 999px; }
+  .col-mine .col-head { background: #f5f3ff; } .col-mine .dot { background: #8b5cf6; }
+  .col-community .col-head { background: #f0f9ff; } .col-community .dot { background: #0ea5e9; }
+  .col-head h2 { font-size: 15px; margin: 0; }
+  ul { list-style: none; margin: 0; padding: 12px; min-height: 80px; }
+  .empty { color: #94a3b8; text-align: center; font-size: 14px; padding: 18px 0; }
+  .task { display: flex; align-items: flex-start; gap: 10px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 8px; }
+  .task.done { background: #f8fafc; }
+  .check { height: 22px; width: 22px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; color: #fff; font-size: 13px; flex-shrink: 0; }
+  .check.checked { background: #8b5cf6; border-color: #8b5cf6; }
+  .col-community .check.checked { background: #0ea5e9; border-color: #0ea5e9; }
+  .task-body { flex: 1; min-width: 0; }
+  .task-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .time { font-size: 11px; font-weight: 700; background: #ede9fe; color: #6d28d9; padding: 1px 6px; border-radius: 4px; }
+  .text { font-size: 14px; }
+  .task.done .text { text-decoration: line-through; color: #94a3b8; }
+  .note { font-size: 12px; color: #64748b; margin-top: 2px; }
+  .author { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+  .actions button { background: none; border: none; cursor: pointer; font-size: 14px; opacity: 0.6; }
+  .actions button:hover { opacity: 1; }
+  .editing { flex-direction: column; align-items: stretch; }
+  .edit-input { width: 100%; padding: 7px 9px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; }
+  .edit-row { display: flex; gap: 8px; margin-top: 6px; }
+  .edit-row input[type=time] { width: 110px; padding: 7px; border: 1px solid #e2e8f0; border-radius: 8px; }
+  .edit-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+  .primary { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+  .composer { border-top: 1px solid #f1f5f9; padding: 12px; background: #f8fafc; }
+  .composer .row1 { display: flex; gap: 8px; }
+  .composer .row1 input { flex: 1; padding: 9px 11px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; outline: none; }
+  .add-btn { height: 38px; width: 38px; border-radius: 8px; border: none; color: #fff; font-size: 20px; cursor: pointer; flex-shrink: 0; }
+  .col-mine .add-btn { background: #7c3aed; } .col-community .add-btn { background: #0284c7; }
+  .composer .row2 { display: flex; gap: 8px; margin-top: 8px; }
+  .composer .row2 input[type=time] { width: 110px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; }
+  .composer .row2 input.note-in { flex: 1; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 8px; }
+  footer { text-align: center; font-size: 12px; color: #94a3b8; margin-top: 24px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">📅</div>
+        <div>
+          <h1>Shared Agenda</h1>
+          <p class="sub">A shared board · password needed to add</p>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="name-box">👤<input id="nameInput" placeholder="Your name" oninput="changeName(this.value)" /></div>
+        <div id="authBar"></div>
+      </div>
+    </header>
+
+    <div class="datenav">
+      <button class="arrow" onclick="shiftDay(-1)">‹</button>
+      <div class="date-center">
+        <div id="dateLabel">—</div>
+        <button id="todayBtn" onclick="goToday()">Jump to today</button>
+      </div>
+      <button class="arrow" onclick="shiftDay(1)">›</button>
+    </div>
+
+    <div class="columns">
+      <div class="col col-mine">
+        <div class="col-head"><span class="dot"></span><h2>My tasks</h2></div>
+        <ul id="list-mine"></ul>
+        <div class="composer">
+          <div class="row1">
+            <input id="text-mine" placeholder="Add a task…" onkeydown="if(event.key==='Enter')addTask('mine')" />
+            <button class="add-btn" onclick="addTask('mine')">+</button>
+          </div>
+          <div class="row2">
+            <input id="time-mine" type="time" />
+            <input id="note-mine" class="note-in" placeholder="Note (optional)" onkeydown="if(event.key==='Enter')addTask('mine')" />
+          </div>
+        </div>
+      </div>
+
+      <div class="col col-community">
+        <div class="col-head"><span class="dot"></span><h2>Community tasks</h2></div>
+        <ul id="list-community"></ul>
+        <div class="composer">
+          <div class="row1">
+            <input id="text-community" placeholder="Add a task…" onkeydown="if(event.key==='Enter')addTask('community')" />
+            <button class="add-btn" onclick="addTask('community')">+</button>
+          </div>
+          <div class="row2">
+            <input id="time-community" type="time" />
+            <input id="note-community" class="note-in" placeholder="Note (optional)" onkeydown="if(event.key==='Enter')addTask('community')" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>Saved automatically and shared with everyone who opens this page.</footer>
+  </div>
+
+  <!-- Firebase (the shared storage) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script>
+    /* ===================================================================
+       ====   THE 3 THINGS YOU EDIT ARE ALL IN THIS BOX   ================
+       =================================================================== */
+
+    // 1) Paste your Firebase config here (you'll get this in Step 2 of the guide)
+    const firebaseConfig = {
+      apiKey: "AIzaSyD5Pcm21qgxA_xIOSpykn4ZcAHm-JJ6rw0",
+      authDomain: "public-agenda-28419.firebaseapp.com",
+      databaseURL: "https://public-agenda-28419-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "public-agenda-28419",
+      storageBucket: "public-agenda-28419.firebasestorage.app",
+      messagingSenderId: "107785468549",
+      appId: "1:107785468549:web:2c7be07f73cb5d6980c7ec"
+    };
+
+    // 2) The password people need to ADD tasks. Change it to anything you like.
+    const CONTRIBUTOR_PASSWORD = "agenda2026";
+
+    // 3) YOUR admin password — lets you delete any task. Keep this private!
+    const ADMIN_PASSWORD = "change_password";
+
+    /* ===================================================================
+       ====   You don't need to touch anything below this line   =========
+       =================================================================== */
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function toKey(d){const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+day;}
+    function fromKey(k){const p=k.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);}
+    function fmtLong(d){return d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});}
+    function escapeHtml(s){return (s||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+    function sortTasks(a){return a.slice().sort(function(x,y){if(x.time&&y.time)return x.time.localeCompare(y.time);if(x.time)return -1;if(y.time)return 1;return (x.createdAt||0)-(y.createdAt||0);});}
+
+    let dateKey = toKey(new Date());
+    let currentTasks = [];
+    let editingId = null;
+    let role = sessionStorage.getItem('agenda-role') || 'none';
+    let myName = localStorage.getItem('agenda-name') || '';
+    let dbRef = null;
+
+    function subscribe(){
+      if(dbRef) dbRef.off();
+      dbRef = db.ref('agenda/' + dateKey);
+      dbRef.on('value', function(snap){
+        const val = snap.val() || {};
+        currentTasks = Object.keys(val).map(function(id){ return Object.assign({id:id}, val[id]); });
+        renderLists();
+      });
+    }
+
+    function canContribute(){ return role === 'contributor' || role === 'admin'; }
+    function canAdmin(){ return role === 'admin'; }
+    function requireContribute(){ if(!canContribute()) login(); return canContribute(); }
+
+    function login(){
+      const p = prompt('Enter the password to add or change tasks:');
+      if(p === null) return;
+      if(p === ADMIN_PASSWORD){ role = 'admin'; }
+      else if(p === CONTRIBUTOR_PASSWORD){ role = 'contributor'; }
+      else { alert('Wrong password.'); return; }
+      sessionStorage.setItem('agenda-role', role);
+      renderAuth();
+    }
+    function logout(){ role = 'none'; sessionStorage.removeItem('agenda-role'); renderAuth(); }
+
+    function renderAuth(){
+      const el = document.getElementById('authBar');
+      if(role === 'none'){
+        el.innerHTML = '<span class="muted">View only</span><button class="btn-sm" onclick="login()">🔓 Unlock to add</button>';
+      } else {
+        el.innerHTML = '<span class="role">' + (role==='admin'?'Admin':'Contributor') + '</span><button class="btn-sm" onclick="logout()">Lock</button>';
+      }
+    }
+
+    function changeName(v){ myName = v; localStorage.setItem('agenda-name', v); }
+
+    function shiftDay(n){ const d = fromKey(dateKey); d.setDate(d.getDate()+n); dateKey = toKey(d); editingId = null; renderDate(); subscribe(); }
+    function goToday(){ dateKey = toKey(new Date()); editingId = null; renderDate(); subscribe(); }
+    function renderDate(){
+      document.getElementById('dateLabel').textContent = fmtLong(fromKey(dateKey));
+      document.getElementById('todayBtn').style.display = (dateKey === toKey(new Date())) ? 'none' : 'inline-block';
+    }
+
+    function addTask(section){
+      if(!requireContribute()) return;
+      const text = document.getElementById('text-'+section).value.trim();
+      if(!text) return;
+      const time = document.getElementById('time-'+section).value;
+      const note = document.getElementById('note-'+section).value.trim();
+      const task = { section:section, text:text, time:time||'', note:note, done:false, author: section==='community'?myName:'', createdAt: Date.now() };
+      db.ref('agenda/'+dateKey).push(task);
+      document.getElementById('text-'+section).value = '';
+      document.getElementById('time-'+section).value = '';
+      document.getElementById('note-'+section).value = '';
+    }
+
+    function toggleDone(id){
+      if(!requireContribute()) return;
+      const t = currentTasks.find(function(x){ return x.id===id; });
+      if(!t) return;
+      db.ref('agenda/'+dateKey+'/'+id).update({ done: !t.done });
+    }
+
+    function deleteTask(id){
+      if(!canAdmin()){ alert('Only the admin can delete tasks.'); return; }
+      db.ref('agenda/'+dateKey+'/'+id).remove();
+    }
+
+    function startEdit(id){ if(!requireContribute()) return; editingId = id; renderLists(); }
+    function cancelEdit(){ editingId = null; renderLists(); }
+    function saveEdit(id){
+      const text = document.getElementById('edit-text-'+id).value.trim();
+      if(!text) return;
+      const time = document.getElementById('edit-time-'+id).value;
+      const note = document.getElementById('edit-note-'+id).value.trim();
+      db.ref('agenda/'+dateKey+'/'+id).update({ text:text, time:time||'', note:note });
+      editingId = null;
+    }
+
+    function taskHtml(t){
+      if(editingId === t.id){
+        return '<li class="task editing">' +
+          '<input id="edit-text-'+t.id+'" class="edit-input" value="'+escapeHtml(t.text)+'">' +
+          '<div class="edit-row"><input id="edit-time-'+t.id+'" type="time" value="'+(t.time||'')+'">' +
+          '<input id="edit-note-'+t.id+'" class="edit-input" placeholder="Note" value="'+escapeHtml(t.note)+'"></div>' +
+          '<div class="edit-actions"><button class="btn-sm" onclick="cancelEdit()">Cancel</button>' +
+          '<button class="btn-sm primary" onclick="saveEdit(\''+t.id+'\')">Save</button></div></li>';
+      }
+      return '<li class="task'+(t.done?' done':'')+'">' +
+        '<button class="check'+(t.done?' checked':'')+'" onclick="toggleDone(\''+t.id+'\')">'+(t.done?'✓':'')+'</button>' +
+        '<div class="task-body"><div class="task-top">' +
+        (t.time?'<span class="time">'+t.time+'</span>':'') +
+        '<span class="text">'+escapeHtml(t.text)+'</span></div>' +
+        (t.note?'<div class="note">'+escapeHtml(t.note)+'</div>':'') +
+        (t.author?'<div class="author">— '+escapeHtml(t.author)+'</div>':'') +
+        '</div><div class="actions">' +
+        '<button onclick="startEdit(\''+t.id+'\')" title="Edit">✏️</button>' +
+        '<button onclick="deleteTask(\''+t.id+'\')" title="Delete">🗑️</button>' +
+        '</div></li>';
+    }
+
+    function renderLists(){
+      const mine = sortTasks(currentTasks.filter(function(t){ return t.section==='mine'; }));
+      const comm = sortTasks(currentTasks.filter(function(t){ return t.section==='community'; }));
+      document.getElementById('list-mine').innerHTML = mine.length ? mine.map(taskHtml).join('') : '<li class="empty">Nothing here yet.</li>';
+      document.getElementById('list-community').innerHTML = comm.length ? comm.map(taskHtml).join('') : '<li class="empty">Nothing here yet.</li>';
+    }
+
+    // start it up
+    document.getElementById('nameInput').value = myName;
+    renderAuth();
+    renderDate();
+    subscribe();
+  </script>
+</body>
+</html>
